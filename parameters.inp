@@ -15,9 +15,7 @@
 4.8     //WF_anode
 3.7     //WF_cathode
 6e-17   //k_rec
-
 1.0e-9  //dx
-
 -0.5     //Va_min
 1.2      //Va_max
 0.01    //increment

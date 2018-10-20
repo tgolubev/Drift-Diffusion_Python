@@ -6,64 +6,67 @@ Created on Fri Oct 19, 2018
 """
 
 import numpy as np
-import params
 
-num_cell = params.num_cell
-        
-# setup the arrays
-p_mob = np.zeros(num_cell+1)
-B_p1 =  np.zeros(num_cell+1)
-B_p2 =  np.zeros(num_cell+1)
-        
-main_diag = np.zeros(num_cell)
-upper_diag = np.zeros(num_cell-1)
-lower_diag = np.zeros(num_cell-1)
-rhs =  np.zeros(num_cell)
-        
-Cp = params.dx*params.dx/(Vt*params.N*params.mobil)
-p_leftBC = (params.N_HOMO*exp(-params.phi_a/Vt))/params.N
-p_rightBC = (params.N_HOMO*exp(-(params.E_gap - params.phi_c)/Vt))/params.N
-        
-
-def setup_eqn(V, Up):
-    bernoulli_fnc_p(V)
-    set_main_diag()
-    set_upper_diag()
-    set_lower_diag()
-    set_rhs(Up)
-
-
-# ----------------------------------------------------------------------------   
-def set_main_diag():
-        
-    for i in range(1, len(main_diag)):
-        main_diag[i] = -(p_mob[i]*B_p2[i] + p_mob[i+1]*B_p1[i+1])
-        
-def set_upper_diag():
+class Continuity_n():
     
-    for i in range(1, len(upper_diag)):
-        upper_diag[i] = p_mob[i+1]*B_p2[i+1]
-        
-def set_lower_diag():
+    def __init__(self, params):
+
+        num_cell = params.num_cell
     
-    for i in range(1, len(lower_diag)):
-        lower_diag[i] = p_mob[i+1]*B_p1[i+1]
-  
-def set_rhs(Un):
-        
-    for i in range(1, len(rhs)):
-        rhs = -Cp * Up[i]
+        # setup the arrays
+        self.p_mob = np.zeros(num_cell+1)
+        self.B_p1 =  np.zeros(num_cell+1)
+        self.B_p2 =  np.zeros(num_cell+1)
+                
+        self.main_diag = np.zeros(num_cell)
+        self.upper_diag = np.zeros(num_cell-1)
+        self.lower_diag = np.zeros(num_cell-1)
+        self.rhs =  np.zeros(num_cell)
+                
+        self.Cp = params.dx*params.dx/(Vt*params.N*params.mobil)
+        self.p_leftBC = (params.N_HOMO*np.exp(-params.phi_a/Vt))/params.N
+        self.p_rightBC = (params.N_HOMO*np.exp(-(params.E_gap - params.phi_c)/Vt))/params.N
             
-    rhs[1] -= p_mob[0]*B_p1[1]*p_leftBC;
-    rhs[len(rhs)-1] -= p_mob[rhs.size()]*B_p2[rhs.size()]*p_rightBC;
+    
+    def setup_eqn(self, V, Up):
+        self.bernoulli_fnc_p(V)
+        self.set_main_diag()
+        self.set_upper_diag()
+        self.set_lower_diag()
+        self.set_rhs(Up)
     
     
-def bernoulli_fnc_p(V):
-    dV = np.zeros(len(V))
-    
-    for i in range(1,len(V)):
-        dV[i] = V[i] - V[i-1]
-        B_p1[i] = dV[i]/(np.exp(dV[i]) - 1.0)
-        B_p2[i] = B_p1[i]*np.exp(dV[i])
+    # ----------------------------------------------------------------------------   
+    def set_main_diag(self):
+            
+        for i in range(1, len(self.main_diag)):
+            self.main_diag[i] = -(self.p_mob[i]*self.B_p2[i] + self.p_mob[i+1]*self.B_p1[i+1])
+            
+    def set_upper_diag(self):
+        
+        for i in range(1, len(self.upper_diag)):
+            self.upper_diag[i] = self.p_mob[i+1]*self.B_p2[i+1]
+            
+    def set_lower_diag(self):
+        
+        for i in range(1, len(self.lower_diag)):
+            self.lower_diag[i] = self.p_mob[i+1]*self.B_p1[i+1]
+      
+    def set_rhs(self, Up):
+        
+        for i in range(1, len(self.rhs)):
+            self.rhs = -self.Cp * Up[i]
+                
+        self.rhs[1] -= self.p_mob[0]*self.B_p1[1]*self.p_leftBC;
+        self.rhs[len(self.rhs)-1] -= self.p_mob[len(self.rhs)]*self.B_p2[len(self.rhs)]*self.p_rightBC;
         
         
+    def bernoulli_fnc_p(self, V):
+        dV = np.zeros(len(V))
+        
+        for i in range(1,len(V)):
+            dV[i] = V[i] - V[i-1]
+            self.B_p1[i] = dV[i]/(np.exp(dV[i]) - 1.0)
+            self.B_p2[i] = self.B_p1[i]*np.exp(dV[i])
+            
+            
