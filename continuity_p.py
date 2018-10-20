@@ -6,8 +6,9 @@ Created on Fri Oct 19, 2018
 """
 
 import numpy as np
+import constants as const
 
-class Continuity_n():
+class Continuity_p():
     
     def __init__(self, params):
 
@@ -23,9 +24,9 @@ class Continuity_n():
         self.lower_diag = np.zeros(num_cell-1)
         self.rhs =  np.zeros(num_cell)
                 
-        self.Cp = params.dx*params.dx/(Vt*params.N*params.mobil)
-        self.p_leftBC = (params.N_HOMO*np.exp(-params.phi_a/Vt))/params.N
-        self.p_rightBC = (params.N_HOMO*np.exp(-(params.E_gap - params.phi_c)/Vt))/params.N
+        self.Cp = params.dx*params.dx/(const.Vt*params.N*params.mobil)
+        self.p_leftBC = (params.N_HOMO*np.exp(-params.phi_a/const.Vt))/params.N
+        self.p_rightBC = (params.N_HOMO*np.exp(-(params.E_gap - params.phi_c)/const.Vt))/params.N
             
     
     def setup_eqn(self, V, Up):

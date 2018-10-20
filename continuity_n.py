@@ -5,7 +5,8 @@ Created on Fri Oct 19, 2018
 @author: Tim
 """
 
-import numpy as np
+import numpy as np, math
+import constants as const
 
 class Continuity_n():
     
@@ -23,9 +24,9 @@ class Continuity_n():
         self.lower_diag = np.zeros(num_cell-1)
         self.rhs =  np.zeros(num_cell)
                 
-        self.Cn = params.dx*params.dx/(Vt*params.N*params.mobil)
-        self.n_leftBC = (params.N_LUMO*exp(-(params.E_gap - params.phi_a)/Vt))/params.N #this is anode
-        self.n_rightBC = (params.N_LUMO*exp(-params.phi_c/Vt))/params.N
+        self.Cn = params.dx*params.dx/(const.Vt*params.N*params.mobil)
+        self.n_leftBC = (params.N_LUMO*math.exp(-(params.E_gap - params.phi_a)/const.Vt))/params.N #this is anode
+        self.n_rightBC = (params.N_LUMO*math.exp(-params.phi_c/const.Vt))/params.N
         
 
 

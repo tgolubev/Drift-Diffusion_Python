@@ -7,6 +7,8 @@ Created on Fri Oct 19, 2018
 
 # create a parameters object
 
+import math
+
 def is_positive(value, comment):   
     if value <= 0:
         print(f"Non-positive input for {comment}\n Input was read as {value}.")
@@ -158,7 +160,7 @@ class Params():
             
             self.N = self.N_HOMO
             
-            self.num_cell = self.L*1e9/self.dx;
+            self.num_cell = math.ceil(self.L/self.dx)  # must cast to an int!! (NOTE: if jsut cast, it rounds .999 down!)
             
         except:
             print(tmp)
