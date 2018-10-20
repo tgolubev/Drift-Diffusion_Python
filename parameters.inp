@@ -1,0 +1,30 @@
+//NOTE:IF-HAVE-ANY-SPACES-IN-COMMENTS-IT-WILL-FAIL
+300.0e-9 //device-thickness(m)
+1e24  //N-LUMO
+1e24  //N-HOMO
+7e27   //Photogeneration-scaling
+0.2    //phi_a
+0.1    //phi_c
+3.0    //eps_active
+4.5e-6 //p_mob_active
+4.5e-6 //n_mob_active
+5e-6   //mobil
+1.5    //E_gap
+-3.9    //active_CB
+-5.4    //active_VB
+4.8     //WF_anode
+3.7     //WF_cathode
+6e-17   //k_rec
+
+1.0e-9  //dx
+
+-0.5     //Va_min
+1.2      //Va_max
+0.01    //increment
+0.01    //w_eq
+0.2    //w_i
+5e-12   //tolerance_i
+2.0     //w_reduce_factor
+10.0    //tol_relax_factor
+gen_rate.inp  //GenRateFileName
+
