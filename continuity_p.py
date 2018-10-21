@@ -31,28 +31,31 @@ class Continuity_p():
             
     
     def setup_eqn(self, V, Up):
-        self.bernoulli_fnc_p(V)
-        self.set_main_diag()
-        self.set_upper_diag()
-        self.set_lower_diag()
+        bernoulli_fnc_p(V, self.B_p1, self.B_p2)
+        self.set_main_diag(self.main_diag,self.p_mob, self.B_p1, self.B_p2)
+        self.set_upper_diag(self.upper_diag, self.p_mob, self.B_p2)
+        self.set_lower_diag(self.lower_diag, self.p_mob, self.B_p1)
         self.set_rhs(Up)
     
     
     # ----------------------------------------------------------------------------   
-    def set_main_diag(self):
+    @jit
+    def set_main_diag(self, main_diag, p_mob, B_p1, B_p2):
             
-        for i in range(1, len(self.main_diag)):
-            self.main_diag[i] = -(self.p_mob[i]*self.B_p2[i] + self.p_mob[i+1]*self.B_p1[i+1])
-            
-    def set_upper_diag(self):
+        for i in range(1, len(main_diag)):
+            main_diag[i] = -(p_mob[i]*B_p2[i] + p_mob[i+1]*B_p1[i+1])
+    
+    @jit        
+    def set_upper_diag(self, upper_diag, p_mob, B_p2):
         
-        for i in range(1, len(self.upper_diag)):
-            self.upper_diag[i] = self.p_mob[i+1]*self.B_p2[i+1]
-            
-    def set_lower_diag(self):
+        for i in range(1, len(upper_diag)):
+            upper_diag[i] = p_mob[i+1]*B_p2[i+1]
+    
+    @jit        
+    def set_lower_diag(self, lower_diag, p_mob, B_p1):
         
-        for i in range(1, len(self.lower_diag)):
-            self.lower_diag[i] = self.p_mob[i+1]*self.B_p1[i+1]
+        for i in range(1, len(lower_diag)):
+            lower_diag[i] = p_mob[i+1]*B_p1[i+1]
       
     def set_rhs(self, Up):
         
@@ -61,13 +64,15 @@ class Continuity_p():
                 
         self.rhs[1] -= self.p_mob[0]*self.B_p1[1]*self.p_leftBC;
         self.rhs[len(self.rhs)-1] -= self.p_mob[len(self.rhs)]*self.B_p2[len(self.rhs)]*self.p_rightBC;
-            
-    def bernoulli_fnc_p(self, V):
-        dV = np.zeros(len(V))
+
+# this is defined outside of the class b/c is faster this way    
+@jit       
+def bernoulli_fnc_p(V, B_p1, B_p2):
+    dV = np.zeros(len(V))
         
-        for i in range(1,len(V)):
-            dV[i] = V[i] - V[i-1]
-            self.B_p1[i] = dV[i]/(np.exp(dV[i]) - 1.0)
-            self.B_p2[i] = self.B_p1[i]*np.exp(dV[i])
+    for i in range(1,len(V)):
+        dV[i] = V[i] - V[i-1]
+        B_p1[i] = dV[i]/(np.exp(dV[i]) - 1.0)
+        B_p2[i] = B_p1[i]*np.exp(dV[i])
             
             
