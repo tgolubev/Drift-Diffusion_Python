@@ -15,7 +15,7 @@ class Continuity_n():
         num_cell = params.num_cell
                 
         # setup the arrays
-        self.n_mob = np.zeros(num_cell+1)
+        self.n_mob = (params.n_mob_active/params.mobil)*np.ones(num_cell+1)
         self.B_n1 =  np.zeros(num_cell+1)
         self.B_n2 =  np.zeros(num_cell+1)
                 
@@ -28,7 +28,6 @@ class Continuity_n():
         self.n_leftBC = (params.N_LUMO*math.exp(-(params.E_gap - params.phi_a)/const.Vt))/params.N #this is anode
         self.n_rightBC = (params.N_LUMO*math.exp(-params.phi_c/const.Vt))/params.N
         
-
 
     # ----------------------------------------------------------------------------   
     def set_main_diag(self):

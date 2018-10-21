@@ -15,7 +15,7 @@ class Continuity_p():
         num_cell = params.num_cell
     
         # setup the arrays
-        self.p_mob = np.zeros(num_cell+1)
+        self.p_mob = (params.p_mob_active/params.mobil)*np.ones(num_cell+1)
         self.B_p1 =  np.zeros(num_cell+1)
         self.B_p2 =  np.zeros(num_cell+1)
                 

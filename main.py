@@ -8,8 +8,7 @@ Created on Fri Oct 19, 2018
 import continuity_n, continuity_p, initialization, photogeneration, poisson, recombination
 import thomas_tridiag_solve as thomas, utilities, constants as const, time
 
-import numpy as np, time, matplotlib, math
-
+import numpy as np, matplotlib, math
 
 params = initialization.Params()
 
@@ -48,6 +47,7 @@ V[0] = V_leftBC  #fill V(0) here for use in Beroulli later
 for i in range(1, num_cell):
     V[i] = V[i-1] + diff
 V[num_cell] = V_rightBC
+# is correct up to here
 
 # note: poisson matrix is already set up when we constructed the poisson object
 
@@ -85,6 +85,7 @@ for Va_cnt in range(0, num_V + 2):
     error_np = 1.0
     iter = 0
     while error_np > params.tolerance:
+        print(error_np)
         
         #--------------- Solve Poisson Equation---------------------------------------------------
         
@@ -97,7 +98,8 @@ for Va_cnt in range(0, num_V + 2):
         
         # Mix old and new solutions for V (for interior elements)
         if iter > 0:
-            V = newV[1:num_cell-1]*params.w + oldV[1:num_cell-1]*(1.0 - params.w)
+             #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
+            V[1:num_cell] = newV[1:num_cell]*params.w + oldV[1:num_cell]*(1.0 - params.w)
         else:
             V = newV
         
@@ -108,12 +110,13 @@ for Va_cnt in range(0, num_V + 2):
         #-----------------Calculate net generation rate--------------------------------------------
         
         R_Langevin = recombo.compute_R_Langevin(params, n, p)
-        Un[1:num_cell-1] = photogen_rate[1:num_cell-1] - R_Langevin[1:num_cell-1]
-        Up[1:num_cell-1] = photogen_rate[1:num_cell-1] - R_Langevin[1:num_cell-1]
+         #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
+        Un[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
+        Up[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
         
         #-----------------Solve equations for n and p----------------------------------------------
         
-        cont_n.setup_eqn(V, Un)
+        cont_n.setup_eqn(V, Un)  
         oldn = n
         newn = thomas.thomas_solve(cont_n)
         
@@ -145,15 +148,36 @@ for Va_cnt in range(0, num_V + 2):
             params.reduce_w()
             params.relax_tolerance()
             
-        p[1:num_cell-1] = newp[1:num_cell-1]*params.w + oldp[1:num_cell-1]*(1.0 - params.w)
-        n[1:num_cell-1] = newn[1:num_cell-1]*params.w + oldn[1:num_cell-1]*(1.0 - params.w)
+        #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
+        p[1:num_cell] = newp[1:num_cell]*params.w + oldp[1:num_cell]*(1.0 - params.w)
+        n[1:num_cell] = newn[1:num_cell]*params.w + oldn[1:num_cell]*(1.0 - params.w)
         p[0] = cont_p.p_leftBC
         n[0] = cont_n.n_leftBC
         # note: we are not including the right boundary point in p and n
         
         iter += 1
         
+        # END of while loop
         
+    # ------------- Calculate currents using Scharfetter-Gummel definition----------------------
+        
+    for i in range(1, num_cell):
+        Jp[i] = (-(const.q*const.Vt*params.N*params.mobil/params.dx) * cont_p.p_mob[i] 
+                *(p[i]*cont_p.B_p2[i] - p[i-1]*cont_p.B_p1[i]))
+                    
+        Jn[i] =  ((const.q*const.Vt*params.N*params.mobil/params.dx) * cont_n.n_mob[i] 
+                 *(n[i]*cont_n.B_n1[i] - n[i-1]*cont_n.B_n2[i]))
+                    
+        J_total[i] = Jp[i] + Jn[i];
+            
+    #----------------------------Write to file-------------------------------------------------
+    #if Va_cnt > 0:
+     #   np.savetxt("JV.txt", Va)#, J_total[math.floor(params.num_cell/2)], iter)
+            
+    
+endtime = time.time()
+
+print(f"Total CPU time: {endtime-start}")
 
         
             
