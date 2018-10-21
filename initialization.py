@@ -146,9 +146,9 @@ class Params():
             is_positive(self.tolerance_i , comment)
             
             tmp = parameters.readline().split()
-            self.w_reduce_facto = float(tmp[0]) 
+            self.w_reduce_factor = float(tmp[0]) 
             comment = tmp[1]
-            is_positive(self.w_reduce_facto, comment)
+            is_positive(self.w_reduce_factor, comment)
             
             tmp = parameters.readline().split()
             self.tol_relax_factor = float(tmp[0]) 
@@ -156,7 +156,7 @@ class Params():
             is_positive(self.tol_relax_factor, comment)
             
             tmp = parameters.readline().split()
-            self.GenRateFileName = tmp[0] 
+            self.gen_rate_file_name = tmp[0] 
             
             self.N = self.N_HOMO
             
@@ -165,6 +165,27 @@ class Params():
         except:
             print(tmp)
             print("Invalid Input. Fix it and rerun")
+            
+            
+    def reduce_w(self):
+        self.w = self.w/self.w_reduce_factor
+        
+    def relax_tolerance(self):
+        self.tolerance = self.tolerance*self.tol_relax_factor
+        
+    def use_tolerance_eq(self):
+        self.tolerance = self.tolerance_eq
+        
+    def use_tolerance_i(self):
+        self.tolerance = self.tolerance_i
+        
+    def use_w_i(self):
+        self.w = self.w_i
+        
+    def use_w_eq(self):
+        self.w = self.w_eq
+        
+        
             
 
         

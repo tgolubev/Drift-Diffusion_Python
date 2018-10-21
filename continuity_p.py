@@ -56,7 +56,7 @@ class Continuity_p():
     def set_rhs(self, Up):
         
         for i in range(1, len(self.rhs)):
-            self.rhs = -self.Cp * Up[i]
+            self.rhs[i] = -self.Cp * Up[i]
                 
         self.rhs[1] -= self.p_mob[0]*self.B_p1[1]*self.p_leftBC;
         self.rhs[len(self.rhs)-1] -= self.p_mob[len(self.rhs)]*self.B_p2[len(self.rhs)]*self.p_rightBC;

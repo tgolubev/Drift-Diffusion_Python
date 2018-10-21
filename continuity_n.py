@@ -49,7 +49,7 @@ class Continuity_n():
     def set_rhs(self, Un):
             
         for i in range(1, len(self.rhs)):
-            self.rhs = -self.Cn * Un[i]
+            self.rhs[i] = -self.Cn * Un[i]
                 
         self.rhs[1] -= self.n_mob[0]*self.B_n2[1]*self.n_leftBC;
         self.rhs[len(self.rhs)-1] -= self.n_mob[len(self.rhs)]*self.B_n1[len(self.rhs)]*self.n_rightBC;
