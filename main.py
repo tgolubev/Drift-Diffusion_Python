@@ -12,6 +12,12 @@ import numpy as np, matplotlib, math
 
 params = initialization.Params()
 
+# define references to these parameters here so can pass them to R_Langevin for a speed up
+N = params.N
+k_rec = params.k_rec
+n1 = params.n1
+p1 = params.p1
+
 num_cell = params.num_cell
 Vbi = params.WF_anode - params.WF_cathode +params.phi_a +params.phi_c
 num_V = math.floor((params.Va_max-params.Va_min)/params.increment) + 1
@@ -116,7 +122,7 @@ for Va_cnt in range(0, num_V + 2):
                
         #-----------------Calculate net generation rate--------------------------------------------
         
-        R_Langevin = recombo.compute_R_Langevin(params, n, p)
+        R_Langevin = recombo.compute_R_Langevin(R_Langevin, n, p, N, k_rec, n1, p1)
          #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
         Un[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
         Up[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]

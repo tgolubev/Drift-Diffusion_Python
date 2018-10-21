@@ -7,7 +7,7 @@ Created on Fri Oct 19, 2018
 
 # create a parameters object
 
-import math
+import math, constants as const, numpy as np
 
 def is_positive(value, comment):   
     if value <= 0:
@@ -161,6 +161,9 @@ class Params():
             self.N = self.N_HOMO
             
             self.num_cell = math.ceil(self.L/self.dx)  # must cast to an int!! (NOTE: if jsut cast, it rounds .999 down!)
+            self.E_trap = self.active_VB + self.E_gap/2.0
+            self.n1 = self.N_LUMO*np.exp(-(self.active_CB - self.E_trap)/const.Vt)
+            self.p1 = self.N_HOMO*np.exp(-(self.E_trap - self.active_VB)/const.Vt)
             
         except:
             print(tmp)
