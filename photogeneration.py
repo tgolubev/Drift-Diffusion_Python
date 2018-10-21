@@ -21,6 +21,8 @@ def get_photogeneration(params):
     photogen_rate = params.Photogen_scaling * photogen_rate/np.max(photogen_rate)
     
     gen_file.close()
+    
+    return photogen_rate
             
   
             

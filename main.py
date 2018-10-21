@@ -18,8 +18,13 @@ num_V = math.floor((params.Va_max-params.Va_min)/params.increment) + 1
 
 params.tolerance_eq = 100*params.tolerance_i  #note: we didn't have to declare a tolerance_eq to define it here!, even though is a params attribute
 
+# create new file (overwriting any previous file in memory)
+JV = open("JV.txt", "w")
+JV.write(" Va                                   , J                        , iter  \n")
+JV.close()
+
+# now open the file to prepare for appending the JV data
 JV = open("JV.txt", "a")
-JV.write("x                , y                          \n")
 
 # -------------------------------------------------------------------------------------------------
 # Construct objects
@@ -73,7 +78,7 @@ for Va_cnt in range(0, num_V + 2):
     if Va_cnt == 1:
         params.use_tolerance_i();  #reset tolerance back
         params.use_w_i();
-        photoge_rate = photogeneration.get_photogeneration(params);
+        photogen_rate = photogeneration.get_photogeneration(params);
     
     # Apply the voltage boundary conditions
     V_leftBC = -((Vbi-Va)/(2*const.Vt) - params.phi_a/const.Vt)
@@ -81,11 +86,13 @@ for Va_cnt in range(0, num_V + 2):
     V[0] = V_leftBC
     V[num_cell] = V_rightBC
     
+    print(f"Va = {Va} V")
+    
     
     error_np = 1.0
     iter = 0
     while error_np > params.tolerance:
-        print(error_np)
+        #print(error_np)
         
         #--------------- Solve Poisson Equation---------------------------------------------------
         
@@ -106,7 +113,7 @@ for Va_cnt in range(0, num_V + 2):
         # reset BC's
         V[0] = V_leftBC
         V[num_cell] = V_rightBC
-        
+               
         #-----------------Calculate net generation rate--------------------------------------------
         
         R_Langevin = recombo.compute_R_Langevin(params, n, p)
@@ -124,6 +131,7 @@ for Va_cnt in range(0, num_V + 2):
         oldp = p
         newp = thomas.thomas_solve(cont_p)
         
+        
         # if get negative p's or n's set them = 0
         for val in newp:
             if val < 0.0:
@@ -137,10 +145,12 @@ for Va_cnt in range(0, num_V + 2):
         for i in range(1, num_cell):
             if (newp[i] != 0) and (newn[i] != 0):
                 error_np_vector[i] = (abs(newp[i]-oldp[i]) + abs(newn[i]-oldn[i]))/abs(oldp[i]+oldn[i])
-                
+        
+        #error np vector is correct
+        
         error_np = max(error_np_vector)
         error_np_vector = np.zeros(num_cell)  # refill with 0's so have fresh one for next iter
-        
+         
         # auto decrease w if not converging
         if error_np >= old_error:
             not_cnv_cnt = not_cnv_cnt+1
@@ -157,7 +167,12 @@ for Va_cnt in range(0, num_V + 2):
         
         iter += 1
         
+        # RESULTS ARE CORREC TTO HERE!
+        
         # END of while loop
+        
+    # p, V and n are correct here!
+
         
     # ------------- Calculate currents using Scharfetter-Gummel definition----------------------
         
@@ -169,12 +184,13 @@ for Va_cnt in range(0, num_V + 2):
                  *(n[i]*cont_n.B_n1[i] - n[i-1]*cont_n.B_n2[i]))
                     
         J_total[i] = Jp[i] + Jn[i];
-            
+
     #----------------------------Write to file-------------------------------------------------
-    #if Va_cnt > 0:
-     #   np.savetxt("JV.txt", Va)#, J_total[math.floor(params.num_cell/2)], iter)
-            
+    if Va_cnt > 0:
+        JV.write(f"{Va}                    {J_total[math.floor(params.num_cell/2)]}             {iter} \n")
     
+            
+JV.close()
 endtime = time.time()
 
 print(f"Total CPU time: {endtime-start}")
