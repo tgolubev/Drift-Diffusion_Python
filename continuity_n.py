@@ -49,11 +49,13 @@ class Continuity_n():
         for i in range(1, len(lower_diag)):
             lower_diag[i] = n_mob[i+1]*B_n2[i+1]
     
-    
+    @jit
     def set_rhs(self, Un):
-            
-        for i in range(1, len(self.rhs)):
-            self.rhs[i] = -self.Cn * Un[i]
+        
+        self.rhs = -self.Cn * Un
+        
+        #for i in range(1, len(self.rhs)):
+            #self.rhs[i] = -self.Cn * Un[i]
                 
         self.rhs[1] -= self.n_mob[0]*self.B_n2[1]*self.n_leftBC;
         self.rhs[len(self.rhs)-1] -= self.n_mob[len(self.rhs)]*self.B_n1[len(self.rhs)]*self.n_rightBC;
@@ -65,7 +67,7 @@ class Continuity_n():
         self.set_lower_diag(self.lower_diag, self.n_mob, self.B_n2)
         self.set_rhs(Un)
 
-@jit
+@jit(nopython = True)
 def bernoulli_fnc_n(V, B_n1, B_n2):
     dV = np.zeros(len(V))
         

@@ -15,7 +15,8 @@ def get_photogeneration(params):
     except:
         print(f"Unable to open file{params.gen_rate_file_name}")
             
-    photogen_rate = np.loadtxt(params.gen_rate_file_name)  # load the data into a numpy array
+    #photogen_rate = np.loadtxt(params.gen_rate_file_name)  # load the data into a numpy array
+    photogen_rate = np.ones(params.num_cell+1)
     # note: if use standard read, it loads data into a string.
     
     photogen_rate = params.Photogen_scaling * photogen_rate/np.max(photogen_rate)

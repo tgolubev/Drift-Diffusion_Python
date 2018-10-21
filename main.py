@@ -173,13 +173,8 @@ for Va_cnt in range(0, num_V + 2):
         
         iter += 1
         
-        # RESULTS ARE CORREC TTO HERE!
-        
         # END of while loop
-        
-    # p, V and n are correct here!
-
-        
+          
     # ------------- Calculate currents using Scharfetter-Gummel definition----------------------
         
     for i in range(1, num_cell):
