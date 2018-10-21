@@ -7,6 +7,7 @@ Created on Fri Oct 19, 2018
 
 import numpy as np, math
 import constants as const
+from numba import jit
 
 class Continuity_n():
     
@@ -30,21 +31,25 @@ class Continuity_n():
         
 
     # ----------------------------------------------------------------------------   
+    
     def set_main_diag(self):
             
         for i in range(1, len(self.main_diag)):
             self.main_diag[i] = -(self.n_mob[i]*self.B_n1[i] + self.n_mob[i+1]*self.B_n2[i+1])
-            
+    
+          
     def set_upper_diag(self):
         
         for i in range(1, len(self.upper_diag)):
             self.upper_diag[i] = self.n_mob[i+1]*self.B_n1[i+1]
-            
+    
+        
     def set_lower_diag(self):
 
         for i in range(1, len(self.lower_diag)):
             self.lower_diag[i] = self.n_mob[i+1]*self.B_n2[i+1]
-      
+    
+    
     def set_rhs(self, Un):
             
         for i in range(1, len(self.rhs)):
@@ -52,8 +57,7 @@ class Continuity_n():
                 
         self.rhs[1] -= self.n_mob[0]*self.B_n2[1]*self.n_leftBC;
         self.rhs[len(self.rhs)-1] -= self.n_mob[len(self.rhs)]*self.B_n1[len(self.rhs)]*self.n_rightBC;
-        
-        
+         
     def bernoulli_fnc_n(self, V):
         dV = np.zeros(len(V))
         
@@ -62,7 +66,7 @@ class Continuity_n():
             self.B_n1[i] = dV[i]/(np.exp(dV[i]) - 1.0)
             self.B_n2[i] = self.B_n1[i]*np.exp(dV[i])
             
-            
+           
     def setup_eqn(self, V, Un):
         self.bernoulli_fnc_n(V)
         self.set_main_diag()

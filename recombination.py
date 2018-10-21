@@ -7,6 +7,7 @@ Created on Fri Oct 19, 2018
 
 import numpy as np
 import constants as const
+from numba import jit
 
 class Recombo():
     

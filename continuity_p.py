@@ -7,6 +7,7 @@ Created on Fri Oct 19, 2018
 
 import numpy as np
 import constants as const
+from numba import jit
 
 class Continuity_p():
     
@@ -60,8 +61,7 @@ class Continuity_p():
                 
         self.rhs[1] -= self.p_mob[0]*self.B_p1[1]*self.p_leftBC;
         self.rhs[len(self.rhs)-1] -= self.p_mob[len(self.rhs)]*self.B_p2[len(self.rhs)]*self.p_rightBC;
-        
-        
+            
     def bernoulli_fnc_p(self, V):
         dV = np.zeros(len(V))
         

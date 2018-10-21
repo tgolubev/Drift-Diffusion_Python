@@ -98,7 +98,7 @@ for Va_cnt in range(0, num_V + 2):
         
         poiss.set_rhs(n, p, V_leftBC, V_rightBC) # update the rhs
         oldV = V
-        newV = thomas.thomas_solve(poiss) 
+        newV = thomas.thomas_solve(poiss.main_diag, poiss.upper_diag, poiss.lower_diag, poiss.rhs) 
         
         newV[0] = V[0]
         newV[num_cell] = V[num_cell]
@@ -125,11 +125,11 @@ for Va_cnt in range(0, num_V + 2):
         
         cont_n.setup_eqn(V, Un)  
         oldn = n
-        newn = thomas.thomas_solve(cont_n)
+        newn = thomas.thomas_solve(cont_n.main_diag, cont_n.upper_diag, cont_n.lower_diag, cont_n.rhs)
         
         cont_p.setup_eqn(V, Up)
         oldp = p
-        newp = thomas.thomas_solve(cont_p)
+        newp = thomas.thomas_solve(cont_p.main_diag, cont_p.upper_diag, cont_p.lower_diag, cont_p.rhs)
         
         
         # if get negative p's or n's set them = 0

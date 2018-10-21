@@ -7,6 +7,7 @@ Created on Fri Oct 19, 2018
 
 import numpy as np
 import constants as const
+from numba import jit
 
 class Poisson():
     
@@ -26,7 +27,7 @@ class Poisson():
         
         self.CV = params.N*params.dx*params.dx*const.q/(const.epsilon_0*const.Vt)
                
-  
+    
     def set_rhs(self, n, p, V_left_BC, V_right_BC):
             
         self.rhs = self.CV * (n - p)
