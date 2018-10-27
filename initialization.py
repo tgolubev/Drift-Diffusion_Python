@@ -188,7 +188,3 @@ class Params():
     def use_w_eq(self):
         self.w = self.w_eq
         
-        
-            
-
-        

@@ -11,40 +11,30 @@ import thomas_tridiag_solve as thomas, utilities, constants as const, time
 import numpy as np, matplotlib, math
 
 params = initialization.Params()
-
-# define references to these parameters here so can pass them to R_Langevin for a speed up
-N = params.N
-k_rec = params.k_rec
-n1 = params.n1
-p1 = params.p1
-
 num_cell = params.num_cell
 Vbi = params.WF_anode - params.WF_cathode +params.phi_a +params.phi_c
 num_V = math.floor((params.Va_max-params.Va_min)/params.increment) + 1
-
 params.tolerance_eq = 100*params.tolerance_i  #note: we didn't have to declare a tolerance_eq to define it here!, even though is a params attribute
 
-# create new file (overwriting any previous file in memory)
-JV = open("JV.txt", "w")
-JV.write(" Va                                   , J                        , iter  \n")
-JV.close()
-
-# now open the file to prepare for appending the JV data
-JV = open("JV.txt", "a")
+JV = open("JV.txt", "w") # create new file (overwriting any previous file in memory)
+JV.write(" Va \t\t\t , J \t\t\t, iter  \n")
 
 # -------------------------------------------------------------------------------------------------
 # Construct objects
-poiss = poisson.Poisson(params)  # BE CAREFUL, DON'T CALL THE OBJECTS THE SAME NAMES AS THE MODULES!
+poiss = poisson.Poisson(params)  
 recombo = recombination.Recombo(params)
 cont_p = continuity_p.Continuity_p(params)
 cont_n = continuity_n.Continuity_n(params)
 photogen = photogeneration.get_photogeneration(params)
 
 # initialize arrays
-oldp = np.zeros(num_cell); newp = np.zeros(num_cell); oldn = np.zeros(num_cell);
-newn = np.zeros(num_cell); oldV = np.zeros(num_cell+1); newV = np.zeros(num_cell+1); V = np.zeros(num_cell+1); 
-Un = np.zeros(num_cell); Up = np.zeros(num_cell); R_Langevin = np.zeros(num_cell); photogen_rate = np.zeros(num_cell); 
-Jp = np.zeros(num_cell); Jn = np.zeros(num_cell); J_total = np.zeros(num_cell); error_np_vector = np.zeros(num_cell); 
+oldp = np.zeros(num_cell); newp = np.zeros(num_cell); 
+oldn = np.zeros(num_cell); newn = np.zeros(num_cell); 
+oldV = np.zeros(num_cell+1); newV = np.zeros(num_cell+1); V = np.zeros(num_cell+1); 
+Un = np.zeros(num_cell); Up = np.zeros(num_cell); 
+R_Langevin = np.zeros(num_cell); photogen_rate = np.zeros(num_cell); 
+Jp = np.zeros(num_cell); Jn = np.zeros(num_cell);
+J_total = np.zeros(num_cell); error_np_vector = np.zeros(num_cell); 
 
 # Initial conditions
 min_dense = min(cont_n.n_leftBC, cont_p.p_rightBC)
@@ -58,7 +48,6 @@ V[0] = V_leftBC  #fill V(0) here for use in Beroulli later
 for i in range(1, num_cell):
     V[i] = V[i-1] + diff
 V[num_cell] = V_rightBC
-# is correct up to here
 
 # note: poisson matrix is already set up when we constructed the poisson object
 
@@ -94,7 +83,6 @@ for Va_cnt in range(0, num_V + 2):
     
     print(f"Va = {Va} V")
     
-    
     error_np = 1.0
     iter = 0
     while error_np > params.tolerance:
@@ -102,16 +90,15 @@ for Va_cnt in range(0, num_V + 2):
         
         #--------------- Solve Poisson Equation---------------------------------------------------
         
-        poiss.set_rhs(n, p, V_leftBC, V_rightBC) # update the rhs
+        poiss.set_rhs(n, p, V_leftBC, V_rightBC) 
         oldV = V
         newV = thomas.thomas_solve(poiss.main_diag, poiss.upper_diag, poiss.lower_diag, poiss.rhs) 
         
         newV[0] = V[0]
         newV[num_cell] = V[num_cell]
         
-        # Mix old and new solutions for V (for interior elements)
+        # Mix old and new solutions for V (for interior elements), for stability of algorithm
         if iter > 0:
-             #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
             V[1:num_cell] = newV[1:num_cell]*params.w + oldV[1:num_cell]*(1.0 - params.w)
         else:
             V = newV
@@ -122,8 +109,7 @@ for Va_cnt in range(0, num_V + 2):
                
         #-----------------Calculate net generation rate--------------------------------------------
         
-        R_Langevin = recombo.compute_R_Langevin(R_Langevin, n, p, N, k_rec, n1, p1)
-         #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
+        R_Langevin = recombo.compute_R_Langevin(R_Langevin, n, p, params.N, params.k_rec,params. n1, params.p1)
         Un[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
         Up[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
         
@@ -152,8 +138,6 @@ for Va_cnt in range(0, num_V + 2):
             if (newp[i] != 0) and (newn[i] != 0):
                 error_np_vector[i] = (abs(newp[i]-oldp[i]) + abs(newn[i]-oldn[i]))/abs(oldp[i]+oldn[i])
         
-        #error np vector is correct
-        
         error_np = max(error_np_vector)
         error_np_vector = np.zeros(num_cell)  # refill with 0's so have fresh one for next iter
          
@@ -164,7 +148,7 @@ for Va_cnt in range(0, num_V + 2):
             params.reduce_w()
             params.relax_tolerance()
             
-        #NOTE: PYTHON DOES RANGES AS [)  IT DOESN'T INCLUDE THE endpoint!!!!!!!
+        # linear mixing of old and new solutions for stability
         p[1:num_cell] = newp[1:num_cell]*params.w + oldp[1:num_cell]*(1.0 - params.w)
         n[1:num_cell] = newn[1:num_cell]*params.w + oldn[1:num_cell]*(1.0 - params.w)
         p[0] = cont_p.p_leftBC
@@ -188,19 +172,11 @@ for Va_cnt in range(0, num_V + 2):
 
     #----------------------------Write to file-------------------------------------------------
     if Va_cnt > 0:
-        JV.write(f"{Va}                    {J_total[math.floor(params.num_cell/2)]}             {iter} \n")
-    
-            
+        JV.write(f"{Va} \t\t\t {J_total[math.floor(params.num_cell/2)]} \t\t\t {iter} \n")
+          
 JV.close()
 endtime = time.time()
 
 print(f"Total CPU time: {endtime-start}")
 
         
-            
-                
-
-
-
-
-

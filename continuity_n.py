@@ -29,52 +29,33 @@ class Continuity_n():
         self.n_leftBC = (params.N_LUMO*math.exp(-(params.E_gap - params.phi_a)/const.Vt))/params.N #this is anode
         self.n_rightBC = (params.N_LUMO*math.exp(-params.phi_c/const.Vt))/params.N
         
-
-    # ----------------------------------------------------------------------------   
-    @jit
-    def set_main_diag(self, main_diag, n_mob, B_n1, B_n2):
-            
-        for i in range(1, len(main_diag)):
-            main_diag[i] = -(n_mob[i]*B_n1[i] + n_mob[i+1]*B_n2[i+1])
-    
-    @jit      
-    def set_upper_diag(self, upper_diag, n_mob, B_n1):
-        
-        for i in range(1, len(upper_diag)):
-            upper_diag[i] = n_mob[i+1]*B_n1[i+1]
-    
+ 
     @jit    
-    def set_lower_diag(self, lower_diag, n_mob, B_n2):
-
-        for i in range(1, len(lower_diag)):
-            lower_diag[i] = n_mob[i+1]*B_n2[i+1]
-    
-    @jit
-    def set_rhs(self, Un):
-        
-        self.rhs = -self.Cn * Un
-        
-        #for i in range(1, len(self.rhs)):
-            #self.rhs[i] = -self.Cn * Un[i]
-                
-        self.rhs[1] -= self.n_mob[0]*self.B_n2[1]*self.n_leftBC;
-        self.rhs[len(self.rhs)-1] -= self.n_mob[len(self.rhs)]*self.B_n1[len(self.rhs)]*self.n_rightBC;
-         
     def setup_eqn(self, V, Un):
         bernoulli_fnc_n(V, self.B_n1, self.B_n2)
-        self.set_main_diag(self.main_diag, self.n_mob, self.B_n1, self.B_n2)
-        self.set_upper_diag(self.upper_diag, self.n_mob, self.B_n1)
-        self.set_lower_diag(self.lower_diag, self.n_mob, self.B_n2)
-        self.set_rhs(Un)
+        
+        # set rhs
+        self.rhs = -self.Cn * Un                
+        self.rhs[1] -= self.n_mob[0]*self.B_n2[1]*self.n_leftBC;
+        self.rhs[-1] -= self.n_mob[-1]*self.B_n1[-1]*self.n_rightBC;
+        
+        # set main diagonal
+        self.main_diag[1:] = -(self.n_mob[1:-1]*self.B_n1[1:-1] + self.n_mob[2:]*self.B_n2[2:])
+        
+        # set lower diagonal
+        self.lower_diag[1:] = self.n_mob[2:-1]*self.B_n2[2:-1]
+        
+        # set upper diagonal
+        self.upper_diag[1:] = self.n_mob[2:-1]*self.B_n1[2:-1]
+        
 
 @jit(nopython = True)
 def bernoulli_fnc_n(V, B_n1, B_n2):
-    dV = np.zeros(len(V))
+    dV = np.empty(len(V))
         
     for i in range(1,len(V)):
         dV[i] = V[i] - V[i-1]
-        B_n1[i] = dV[i]/(np.exp(dV[i]) - 1.0)
-        B_n2[i] = B_n1[i]*np.exp(dV[i])
+        
+    B_n1[1:] = dV[1:]/(np.exp(dV[1:]) - 1.0)
+    B_n2[1:] = B_n1[1:]*np.exp(dV[1:])
             
-        #note: since python passes variables like by reference, if the variables are mutatable, like
-        # an array, we can mutate them here and the changes will remain outside the function!            

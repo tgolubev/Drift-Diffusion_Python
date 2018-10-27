@@ -4,9 +4,26 @@ Here is a 1D model written in Python which solves the semiconductor Poisson-Drif
 
 The equations are solved using the self-consistent iterative approach called the Gummel method. In order to ensure numerical stability for the continuity equations, Scharfetter Gummel discretization as well as linear mixing of old and new solutions is used. 
 
+### Performance
+The code has been accelerated using Numba @jit decorators. Sample CPU Times:
+Without Numba: 469.7 sec
+With Numba: 73.7 sec
+
+The conclusion here is that Numba gives a significant performance boost with low effort. You may read about Numba here:
+http://numba.pydata.org/
 
 ## C++ and Matlab implementations
 
 You can find my C++ and Matlab implementations of this same model as well as 2D and 3D versions here: 
 
-\url{https://github.com/tgolubev/Drift-Diffusion_models-Cpp_Matlab}
+https://github.com/tgolubev/Drift-Diffusion_models-Cpp_Matlab
+
+### Performance comparison:
+
+For the 1D code with mesh size dx = 0.25nm and a system size of 300nm:
+
+Python: 73.7 sec
+Matlab: 40 sec
+C++: 3.7 sec
+
+Therefore, currently the C++ version is much faster, perhaps with a disadvantage of being less elegant to read.
