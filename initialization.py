@@ -2,27 +2,46 @@
 """
 Created on Fri Oct 19, 2018
 
-@author: Tim
-"""
+@author: Timofey Golubev
 
-# create a parameters object
+This contains everything used to read simulation parameters from file and defines a Params class,
+an instance of which can be used to store the parameters.
+"""
 
 import math, constants as const, numpy as np
 
 def is_positive(value, comment):   
+    '''
+    Checks if an input value is positive.
+    Inputs:
+        value:   the input value
+        comment: this is used to be able to output an informative error message, 
+                 if the input value is invalid
+    '''
+    
     if value <= 0:
         print(f"Non-positive input for {comment}\n Input was read as {value}.")
         raise ValueError("This input must be positive")
                     
 def is_negative(value, comment):
+    '''
+    Checks if an input value is positive.
+    Inputs:
+        value:   the input value
+        comment: this is used to be able to output an informative error message, 
+                 if the input value is invalid
+    '''
+    
     if value >= 0:
         print(f"Non-positive input for {comment}\n Input was read as {value}.")
         raise ValueError("This input must be negative")
 
 class Params():
     
-    # NOTE: this version does not tolerate empty lines in the file!!
-    # need to find some way  to ignore whitespace when reading!!!
+    '''
+    The Params class groups all of the simulation parameters parameters into a parameters object.
+    Initialization of a Params instance, reads in the parameters from "parameters.inp" input file.  
+    '''
     
     def __init__(self):
         
@@ -37,8 +56,7 @@ class Params():
             self.L = float(tmp[0])  #note: floats in python are double precision
             comment = tmp[1]
             is_positive(self.L, comment)
-            
-            
+                
             tmp = parameters.readline().split()
             self.N_LUMO = float(tmp[0])  
             comment = tmp[1]
@@ -158,10 +176,10 @@ class Params():
             tmp = parameters.readline().split()
             self.gen_rate_file_name = tmp[0] 
             
-            self.N = self.N_HOMO
-            
-            self.num_cell = math.ceil(self.L/self.dx)  # must cast to an int!! (NOTE: if jsut cast, it rounds .999 down!)
-            self.E_trap = self.active_VB + self.E_gap/2.0
+            # calculated parameters
+            self.N = self.N_HOMO    
+            self.num_cell = math.ceil(self.L/self.dx)  
+            self.E_trap = self.active_VB + self.E_gap/2.0 # traps are assumed to be at 1/2 of the bandgap
             self.n1 = self.N_LUMO*np.exp(-(self.active_CB - self.E_trap)/const.Vt)
             self.p1 = self.N_HOMO*np.exp(-(self.E_trap - self.active_VB)/const.Vt)
             
@@ -169,22 +187,50 @@ class Params():
             print(tmp)
             print("Invalid Input. Fix it and rerun")
             
-            
+    
+    # The following functions are mostly to make the main code a bit more readable and obvious what
+    # is being done.
+        
     def reduce_w(self):
+        '''
+        Reduces the weighting factor (w) (used for linear mixing of old and new solutions) by w_reduce_factor
+        which is defined in the input parameters
+        '''
         self.w = self.w/self.w_reduce_factor
         
     def relax_tolerance(self):
+        '''
+        Relax the criterea for determining convergence of a solution by the tol_relax_factor. 
+        This is sometimes necessary for hard to converge situations. 
+        The relaxing of tolerance is done automatically when convergence issues are detected.
+        '''
         self.tolerance = self.tolerance*self.tol_relax_factor
         
     def use_tolerance_eq(self):
+        '''
+        Use the convergence tolerance meant for equilibrium condition run. This tolerance is usually
+        higher than the regular tolerance due the problem is more difficult to converge when simulating
+        at 0 applied voltage.
+        '''
         self.tolerance = self.tolerance_eq
         
     def use_tolerance_i(self):
+        '''
+        Use the initial convergence tolerance specified (before any relaxing of the tolerance).
+        '''
         self.tolerance = self.tolerance_i
         
     def use_w_i(self):
+        '''
+        Use the initially specified weighting factor (w) (used for linear mixing of old and new solutions).
+        '''
         self.w = self.w_i
         
     def use_w_eq(self):
+        '''
+        Use the weighting factor (w) (used for linear mixing of old and new solutions) for the equilibrium 
+        condition run. This is usually lower than the regular w due the problem is more difficult to 
+        converge when simulating at 0 applied voltage.
+        '''
         self.w = self.w_eq
         

@@ -1,8 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 19, 2018
+===================================================================================================
+Solving 1D Poisson + Drift Diffusion semiconductor equations for a solar cell using
+                      Scharfetter-Gummel discretization
 
-@author: Tim
+                        Created on Fri Oct 19, 2018
+
+                          @author: Timofey Golubev
+
+    The code as is will calculate data for a current-vs-voltage curve
+    as well as carrier densities, current densities, and electric field
+    distributions of a generic solar cell made of an active layer and electrodes.
+    More equations for carrier recombination can be easily added.
+    
+    Photogeneration rate will be inputed from an input file (the name of the file can be specified in
+    the parameters input file parameters.inp). For example the output of an optical model or an analytic 
+    expression for photogeneration rate can be used. Generation rate file
+    should contain num_cell-2 number of entries in a single column, corresponding to
+    the the generation rate at each mesh point (except the endpoints).
+    
+    The code can also be applied to non-illuminated devices by
+    setting photogeneration rate to 0.
+
+===================================================================================================
 """
 
 import continuity_n, continuity_p, initialization, photogeneration, poisson, recombination
@@ -53,7 +73,7 @@ V[num_cell] = V_rightBC
 
 start =  time.time()
 
-############################## MAIN LOOP ##########################################################
+###################################### MAIN LOOP ###################################################
 
 for Va_cnt in range(0, num_V + 2):
     not_converged = False 
@@ -81,14 +101,14 @@ for Va_cnt in range(0, num_V + 2):
     V[0] = V_leftBC
     V[num_cell] = V_rightBC
     
-    print(f"Va = {Va} V")
+    print(f"Va = {Va:2.2f} V")
     
     error_np = 1.0
     iter = 0
     while error_np > params.tolerance:
         #print(error_np)
         
-        #--------------- Solve Poisson Equation---------------------------------------------------
+        #------------------------------ Solve Poisson Equation--------------------------------------
         
         poiss.set_rhs(n, p, V_leftBC, V_rightBC) 
         oldV = V
@@ -99,7 +119,7 @@ for Va_cnt in range(0, num_V + 2):
         
         # Mix old and new solutions for V (for interior elements), for stability of algorithm
         if iter > 0:
-            V[1:num_cell] = newV[1:num_cell]*params.w + oldV[1:num_cell]*(1.0 - params.w)
+            V[1:] = newV[1:]*params.w + oldV[1:]*(1.0 - params.w)
         else:
             V = newV
         
@@ -107,13 +127,13 @@ for Va_cnt in range(0, num_V + 2):
         V[0] = V_leftBC
         V[num_cell] = V_rightBC
                
-        #-----------------Calculate net generation rate--------------------------------------------
+        #---------------------------Calculate net generation rate-----------------------------------
         
-        R_Langevin = recombo.compute_R_Langevin(R_Langevin, n, p, params.N, params.k_rec,params. n1, params.p1)
-        Un[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
-        Up[1:num_cell] = photogen_rate[1:num_cell] - R_Langevin[1:num_cell]
+        R_Langevin = recombo.compute_R_Langevin(R_Langevin, n, p, params.N, params.k_rec, params.n1, params.p1)
+        Un[1:] = photogen_rate[1:] - R_Langevin[1:]
+        Up[1:] = photogen_rate[1:] - R_Langevin[1:]
         
-        #-----------------Solve equations for n and p----------------------------------------------
+        #-----------------Solve equations for electron and hole density (n and p)-------------------
         
         cont_n.setup_eqn(V, Un)  
         oldn = n
@@ -121,8 +141,7 @@ for Va_cnt in range(0, num_V + 2):
         
         cont_p.setup_eqn(V, Up)
         oldp = p
-        newp = thomas.thomas_solve(cont_p.main_diag, cont_p.upper_diag, cont_p.lower_diag, cont_p.rhs)
-        
+        newp = thomas.thomas_solve(cont_p.main_diag, cont_p.upper_diag, cont_p.lower_diag, cont_p.rhs)       
         
         # if get negative p's or n's set them = 0
         for val in newp:
@@ -132,7 +151,8 @@ for Va_cnt in range(0, num_V + 2):
             if val < 0.0:
                 val = 0
                 
-        # calculate the error
+        #--------------Calculate the difference (error) between prev. and current solution----------
+        
         old_error = error_np
         for i in range(1, num_cell):
             if (newp[i] != 0) and (newn[i] != 0):
@@ -149,17 +169,17 @@ for Va_cnt in range(0, num_V + 2):
             params.relax_tolerance()
             
         # linear mixing of old and new solutions for stability
-        p[1:num_cell] = newp[1:num_cell]*params.w + oldp[1:num_cell]*(1.0 - params.w)
-        n[1:num_cell] = newn[1:num_cell]*params.w + oldn[1:num_cell]*(1.0 - params.w)
+        p[1:] = newp[1:]*params.w + oldp[1:]*(1.0 - params.w)
+        n[1:] = newn[1:]*params.w + oldn[1:]*(1.0 - params.w)
         p[0] = cont_p.p_leftBC
         n[0] = cont_n.n_leftBC
-        # note: we are not including the right boundary point in p and n
+        # note: we are not including the right boundary point in p and n here
         
         iter += 1
         
         # END of while loop
           
-    # ------------- Calculate currents using Scharfetter-Gummel definition----------------------
+    # ------------- Calculate currents using Scharfetter-Gummel definition-------------------------
         
     for i in range(1, num_cell):
         Jp[i] = (-(const.q*const.Vt*params.N*params.mobil/params.dx) * cont_p.p_mob[i] 
@@ -170,13 +190,11 @@ for Va_cnt in range(0, num_V + 2):
                     
         J_total[i] = Jp[i] + Jn[i];
 
-    #----------------------------Write to file-------------------------------------------------
+    #----------------------------Write results to file----------------------------------------------
     if Va_cnt > 0:
         JV.write(f"{Va} \t\t\t {J_total[math.floor(params.num_cell/2)]} \t\t\t {iter} \n")
           
 JV.close()
 endtime = time.time()
 
-print(f"Total CPU time: {endtime-start}")
-
-        
+print(f"Total CPU time: {endtime-start}") 

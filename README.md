@@ -22,7 +22,7 @@ https://github.com/tgolubev/Drift-Diffusion_models-Cpp_Matlab
 
 For the 1D code with mesh size dx = 0.25nm and a system size of 300nm:
 
-Python: 73.7 sec
+Python: 69.8 sec
 Matlab: 40 sec
 C++: 3.7 sec
 

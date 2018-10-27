@@ -2,7 +2,9 @@
 """
 Created on Fri Oct 19, 2018
 
-@author: Tim
+@author: Timofey Golubev
+
+This contains an implementation of the Thomas algorithm for solving a tridiagonal matrix equation.
 """
 import numpy as np
 import time
@@ -10,6 +12,16 @@ from numba import jit
 
 @jit(nopython=True, parallel = True)  
 def thomas_solve(diagonal, upper, lower, rhs):
+    '''
+    Solves a tridiagonal matrix equation using the Thomas algorithm [1].
+    Inputs: The matrix is passed in terms of 3 NumPy arrays corresponding to the upper, lower, and main
+        diagonal. 
+        rhs: array for the right hand side
+        
+
+    Reference:
+        [1] https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+    '''
     
     num_elements = len(diagonal) - 1
 
