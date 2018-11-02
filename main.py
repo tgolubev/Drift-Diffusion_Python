@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 ===================================================================================================
-Solving 1D Poisson + Drift Diffusion semiconductor equations for a solar cell using
+  Solving 1D Poisson + Drift Diffusion semiconductor equations for a solar cell using
                       Scharfetter-Gummel discretization
 
                         Created on Fri Oct 19, 2018
 
                           @author: Timofey Golubev
 
-    The code as is will calculate data for a current-vs-voltage curve
-    as well as carrier densities, current densities, and electric field
-    distributions of a generic solar cell made of an active layer and electrodes.
+    The code as is will simulate a current-vs-voltage curve
+     of a generic solar cell made of an active layer and electrodes.
     More equations for carrier recombination can be easily added.
     
     Photogeneration rate will be inputed from an input file (the name of the file can be specified in
@@ -28,16 +27,16 @@ Solving 1D Poisson + Drift Diffusion semiconductor equations for a solar cell us
 import continuity_n, continuity_p, initialization, photogeneration, poisson, recombination
 import thomas_tridiag_solve as thomas, utilities, constants as const, time
 
-import numpy as np, matplotlib, math
+import numpy as np, matplotlib.pyplot as plt, math
 
 params = initialization.Params()
 num_cell = params.num_cell
 Vbi = params.WF_anode - params.WF_cathode +params.phi_a +params.phi_c
 num_V = math.floor((params.Va_max-params.Va_min)/params.increment) + 1
-params.tolerance_eq = 100*params.tolerance_i  #note: we didn't have to declare a tolerance_eq to define it here!, even though is a params attribute
+params.tolerance_eq = 100*params.tolerance_i  
 
-JV = open("JV.txt", "w") # create new file (overwriting any previous file in memory)
-JV.write(" Va \t\t\t , J \t\t\t, iter  \n")
+JV = open("JV.txt", "w") 
+JV.write("# Voltage (V) \t  Current (A/m^2) \n")
 
 # -------------------------------------------------------------------------------------------------
 # Construct objects
@@ -104,7 +103,7 @@ for Va_cnt in range(0, num_V + 2):
     print(f"Va = {Va:2.2f} V")
     
     error_np = 1.0
-    iter = 0
+    it = 0
     while error_np > params.tolerance:
         #print(error_np)
         
@@ -118,7 +117,7 @@ for Va_cnt in range(0, num_V + 2):
         newV[num_cell] = V[num_cell]
         
         # Mix old and new solutions for V (for interior elements), for stability of algorithm
-        if iter > 0:
+        if it > 0:
             V[1:] = newV[1:]*params.w + oldV[1:]*(1.0 - params.w)
         else:
             V = newV
@@ -159,7 +158,7 @@ for Va_cnt in range(0, num_V + 2):
                 error_np_vector[i] = (abs(newp[i]-oldp[i]) + abs(newn[i]-oldn[i]))/abs(oldp[i]+oldn[i])
         
         error_np = max(error_np_vector)
-        error_np_vector = np.zeros(num_cell)  # refill with 0's so have fresh one for next iter
+        error_np_vector = np.zeros(num_cell)  # refill with 0's so have fresh one for next it
          
         # auto decrease w if not converging
         if error_np >= old_error:
@@ -169,13 +168,13 @@ for Va_cnt in range(0, num_V + 2):
             params.relax_tolerance()
             
         # linear mixing of old and new solutions for stability
-        p[1:] = newp[1:]*params.w + oldp[1:]*(1.0 - params.w)
-        n[1:] = newn[1:]*params.w + oldn[1:]*(1.0 - params.w)
+        p[1:num_cell] = newp[1:num_cell]*params.w + oldp[1:num_cell]*(1.0 - params.w)
+        n[1:num_cell] = newn[1:num_cell]*params.w + oldn[1:num_cell]*(1.0 - params.w)
         p[0] = cont_p.p_leftBC
         n[0] = cont_n.n_leftBC
         # note: we are not including the right boundary point in p and n here
         
-        iter += 1
+        it += 1
         
         # END of while loop
           
@@ -192,9 +191,22 @@ for Va_cnt in range(0, num_V + 2):
 
     #----------------------------Write results to file----------------------------------------------
     if Va_cnt > 0:
-        JV.write(f"{Va} \t\t\t {J_total[math.floor(params.num_cell/2)]} \t\t\t {iter} \n")
+        JV.write(f"{Va:2.2f} \t\t\t {J_total[math.floor(params.num_cell/2)]:4.8f} \n")
+        
+    # End of main loop
           
-JV.close()
-endtime = time.time()
 
+endtime = time.time()
 print(f"Total CPU time: {endtime-start}") 
+JV.close()
+
+# Plot Results
+V, J = np.loadtxt("JV.txt", usecols=(0,1), unpack = True)  # usecols specifies columns to use, unpack specifies to use tuple unpacking
+plt.xlim(params.Va_min, params.Va_max)
+plt.ylim(-250, 100)
+plt.plot(V, J)
+plt.xlabel('Voltage ($V$)')
+plt.ylabel('Current ($A/m^2$)') # TeX markup
+plt.grid(True)
+plt.savefig("JV.jpg", dpi = 1200) #specify the dpi for a high resolution image
+
