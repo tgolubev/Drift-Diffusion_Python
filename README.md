@@ -27,3 +27,9 @@ Matlab: 40 sec
 C++: 3.7 sec
 
 Therefore, currently the C++ version is much faster, perhaps with a disadvantage of being less elegant to read.
+
+## Citing
+If you use this code in a scientific publication, I would appreciate citations to the following paper:
+
+T. Golubev, D. Liu, R. Lunt, P. Duxbury. Understanding the impact of C60 at the interface of perovskite solar cells via drift-diffusion modeling. AIP Advances 9, 035026 (2019) https://aip.scitation.org/doi/full/10.1063/1.5068690
+
